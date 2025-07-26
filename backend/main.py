@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from users import router as user_router
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
@@ -6,7 +7,10 @@ import random
 
 app = FastAPI()
 
-# Sample 100 common words (later use JSON or DB)
+# Mount user auth routes early
+app.include_router(user_router)
+
+# Sample 100 common words (for typing prompt)
 COMMON_WORDS = [
     "the", "of", "and", "to", "a", "in", "is", "you", "that", "it",
     "he", "was", "for", "on", "are", "as", "with", "his", "they", "I",
@@ -18,29 +22,25 @@ COMMON_WORDS = [
     "two", "more", "write", "go", "see", "number", "way", "could", "people", "my"
 ]
 
-# In-memory results store
+# In-memory test results (temporary)
 typing_test_results = []
 
-# 🧠 Typing test result schema
 class TypingTestResult(BaseModel):
     prompt: List[str]
     wpm: float
     raw_wpm: float
     accuracy: float
-    timestamp: str  # from frontend
+    timestamp: str  # frontend timestamp (ISO)
 
-# 📥 Save result (POST)
 @app.post("/api/typing-tests")
 def save_test_result(result: TypingTestResult):
     typing_test_results.append(result)
     return {"message": "Result saved successfully", "data": result}
 
-# 📤 Get all results (GET)
 @app.get("/api/typing-tests")
 def get_all_results():
     return {"results": typing_test_results}
 
-# 🧠 Get random prompt (GET)
 @app.get("/api/prompt")
 def get_prompt():
     num_words = random.randint(20, 30)
