@@ -12,23 +12,23 @@ const TypingTest = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [testFinished, setTestFinished] = useState(false);
-  const [finishedOnce, setFinishedOnce] = useState(false); // ✅ NEW STATE
   const [stats, setStats] = useState({ wpm: 0, rawWPM: 0, accuracy: 0 });
 
   const promptText = promptWords.join(" ");
+
+  // ✅ Load only once on mount
+  useEffect(() => {
+    loadPrompt();
+  }, []);
 
   const loadPrompt = async () => {
     const words = await fetchNewPrompt();
     setPromptWords(words);
   };
 
-  useEffect(() => {
-    loadPrompt();
-  }, []);
-
   const handleChange = (value) => {
-    // Don't allow further typing after finish
-    if (testFinished || value.length > promptText.length || finishedOnce) return;
+    // ✅ Prevent typing after finish
+    if (testFinished || value.length > promptText.length) return;
 
     if (!hasStarted && value.length > 0) {
       setHasStarted(true);
@@ -37,7 +37,8 @@ const TypingTest = () => {
 
     setTypedText(value);
 
-    if (value.length === promptText.length) {
+    // ✅ Finish only once when length matches
+    if (!testFinished && value.length === promptText.length) {
       finishTest(value);
     }
   };
@@ -46,23 +47,22 @@ const TypingTest = () => {
     const duration = (Date.now() - startTime) / 60000;
     const correctChars = promptText.split("").filter((c, i) => c === finalText[i]).length;
     const totalTyped = finalText.length;
+
     const wpm = Math.round((correctChars / 5) / duration);
     const rawWPM = Math.round((totalTyped / 5) / duration);
     const accuracy = Math.round((correctChars / totalTyped) * 100);
 
     setStats({ wpm, rawWPM, accuracy });
     setTestFinished(true);
-    setFinishedOnce(true); // ✅ Prevent any further change
   };
 
   const handleReset = async () => {
-    setTypedText("");
+    setTestFinished(false);     // reset test state
+    setTypedText("");           // clear input
     setHasStarted(false);
-    setTestFinished(false);
-    setFinishedOnce(false); // ✅ Reset the protection flag
     setStartTime(null);
     setStats({ wpm: 0, rawWPM: 0, accuracy: 0 });
-    await loadPrompt();
+    await loadPrompt();         // ✅ NEW sentence only here
   };
 
   return (

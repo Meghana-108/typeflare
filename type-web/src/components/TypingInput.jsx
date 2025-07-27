@@ -1,7 +1,20 @@
+import { useEffect, useRef } from "react";
+
 const TypingInput = ({ typedText, onChange, onReset }) => {
+  const inputRef = useRef(null); // 🔁
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();           // 👀 focus it
+      inputRef.current.selectionStart = 0; // move cursor to start
+      inputRef.current.selectionEnd = 0;
+    }
+  }, [typedText === ""]); // runs only on reset when text is cleared
+
   return (
     <div className="flex flex-col items-center mt-6 w-full">
       <textarea
+        ref={inputRef} // 🔁
         className="bg-black text-white p-3 w-full rounded-lg font-mono text-lg resize-none"
         rows={2}
         autoFocus
