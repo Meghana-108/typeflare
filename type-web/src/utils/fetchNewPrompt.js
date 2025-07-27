@@ -1,5 +1,5 @@
 export const fetchNewPrompt = async () => {
-  const wordPool = ["hello", "world", "test", "type", "fast", "keyboard", "speed", "track"];
+  const wordPool = ["hello", "world", "type", "test", "keyboard", "quick", "react", "monkey"];
   const words = Array.from({ length: 25 }, () =>
     wordPool[Math.floor(Math.random() * wordPool.length)]
   );

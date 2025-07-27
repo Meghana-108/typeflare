@@ -9,23 +9,23 @@ import { fetchNewPrompt } from "../utils/fetchNewPrompt";
 const TypingTest = () => {
   const [promptWords, setPromptWords] = useState([]);
   const [typedText, setTypedText] = useState("");
-  const [testFinished, setTestFinished] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [startTime, setStartTime] = useState(null);
+  const [testFinished, setTestFinished] = useState(false);
   const [stats, setStats] = useState({ wpm: 0, rawWPM: 0, accuracy: 0 });
-  const [resetVersion, setResetVersion] = useState(0); // 👈 Tracks resets
 
   const promptText = promptWords.join(" ");
 
-  useEffect(() => {
-    const loadPrompt = async () => {
-      const words = await fetchNewPrompt();
-      setPromptWords(words);
-    };
-    loadPrompt();
-  }, [resetVersion]); // 👈 Runs only on first mount and reset
+  const loadPrompt = async () => {
+    const words = await fetchNewPrompt();
+    setPromptWords(words);
+  };
 
-  const handleChangeText = (value) => {
+  useEffect(() => {
+    loadPrompt();
+  }, []); // ✅ Load once on first mount only
+
+  const handleChange = (value) => {
     if (testFinished || value.length > promptText.length) return;
 
     if (!hasStarted && value.length > 0) {
@@ -36,28 +36,32 @@ const TypingTest = () => {
     setTypedText(value);
 
     if (value.length === promptText.length) {
-      setTestFinished(true);
-      calculateStats(value);
+      finishTest(value);
     }
   };
 
-  const calculateStats = (typed) => {
-    const time = (Date.now() - startTime) / 60000;
-    const correct = promptText.split("").filter((c, i) => c === typed[i]).length;
-    const total = typed.length;
-    const wpm = Math.round((correct / 5) / time);
-    const rawWPM = Math.round((total / 5) / time);
-    const accuracy = Math.round((correct / total) * 100);
+  const finishTest = (finalText) => {
+    const endTime = Date.now();
+    const duration = (endTime - startTime) / 60000; // in minutes
+    const correctChars = promptText.split("").filter((c, i) => c === finalText[i]).length;
+    const totalTyped = finalText.length;
+
+    const wpm = Math.round((correctChars / 5) / duration);
+    const rawWPM = Math.round((totalTyped / 5) / duration);
+    const accuracy = Math.round((correctChars / totalTyped) * 100);
+
     setStats({ wpm, rawWPM, accuracy });
+    setTestFinished(true);
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setTypedText("");
     setHasStarted(false);
     setTestFinished(false);
     setStartTime(null);
     setStats({ wpm: 0, rawWPM: 0, accuracy: 0 });
-    setResetVersion((prev) => prev + 1); // 👈 Triggers full new test
+
+    await loadPrompt(); // ✅ New sentence ONLY on reset
   };
 
   return (
@@ -70,14 +74,13 @@ const TypingTest = () => {
         ) : (
           <>
             <TypingPrompt
-              key={resetVersion} // 👈 Forces full reset of prompt color states
               promptWords={promptWords}
               typedText={typedText}
               hasStarted={hasStarted}
             />
             <TypingInput
               typedText={typedText}
-              onChange={handleChangeText}
+              onChange={handleChange}
               onReset={handleReset}
             />
           </>
