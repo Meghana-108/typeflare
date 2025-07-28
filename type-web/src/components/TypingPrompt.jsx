@@ -10,7 +10,7 @@ const TypingPrompt = ({ promptWords, typedText, hasStarted }) => {
           className = typedText[index] === char ? "text-green-400" : "text-red-500";
         }
 
-        // 👉 Blinking cursor at current position
+        // ✅ Blinking cursor
         const showCursor = index === typedText.length;
 
         return (
@@ -25,6 +25,5 @@ const TypingPrompt = ({ promptWords, typedText, hasStarted }) => {
     </div>
   );
 };
-
 
 export default TypingPrompt;

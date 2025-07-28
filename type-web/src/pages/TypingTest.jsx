@@ -13,21 +13,20 @@ const TypingTest = () => {
   const [startTime, setStartTime] = useState(null);
   const [testFinished, setTestFinished] = useState(false);
   const [stats, setStats] = useState({ wpm: 0, rawWPM: 0, accuracy: 0 });
+  const [resetFlag, setResetFlag] = useState(false); // 👈 flag to trigger reset focus
 
   const promptText = promptWords.join(" ");
-
-  // ✅ Load only once on mount
-  useEffect(() => {
-    loadPrompt();
-  }, []);
 
   const loadPrompt = async () => {
     const words = await fetchNewPrompt();
     setPromptWords(words);
   };
 
+  useEffect(() => {
+    loadPrompt();
+  }, []);
+
   const handleChange = (value) => {
-    // ✅ Prevent typing after finish
     if (testFinished || value.length > promptText.length) return;
 
     if (!hasStarted && value.length > 0) {
@@ -37,8 +36,7 @@ const TypingTest = () => {
 
     setTypedText(value);
 
-    // ✅ Finish only once when length matches
-    if (!testFinished && value.length === promptText.length) {
+    if (value.length === promptText.length) {
       finishTest(value);
     }
   };
@@ -57,13 +55,23 @@ const TypingTest = () => {
   };
 
   const handleReset = async () => {
-    setTestFinished(false);     // reset test state
-    setTypedText("");           // clear input
+    setTypedText("");
     setHasStarted(false);
+    setTestFinished(false);
     setStartTime(null);
     setStats({ wpm: 0, rawWPM: 0, accuracy: 0 });
-    await loadPrompt();         // ✅ NEW sentence only here
+
+    await loadPrompt();        // 👈 Load fresh sentence
+    setResetFlag(true);        // 👈 Trigger refocus
   };
+
+  // Reset the flag after applying it
+  useEffect(() => {
+    if (resetFlag) {
+      const timer = setTimeout(() => setResetFlag(false), 100); // avoid repeated triggers
+      return () => clearTimeout(timer);
+    }
+  }, [resetFlag]);
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-white">
@@ -83,6 +91,7 @@ const TypingTest = () => {
               typedText={typedText}
               onChange={handleChange}
               onReset={handleReset}
+              resetFlag={resetFlag} // 👈 passed here
             />
           </>
         )}
