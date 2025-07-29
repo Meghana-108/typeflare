@@ -1,4 +1,3 @@
-// src/components/TypingInput.jsx
 import { useEffect, useRef } from "react";
 
 const TypingInput = ({ typedText, onChange, onReset, resetFlag }) => {
@@ -6,16 +5,16 @@ const TypingInput = ({ typedText, onChange, onReset, resetFlag }) => {
 
   useEffect(() => {
     if (resetFlag && inputRef.current) {
-      inputRef.current.focus();              // 🔁 Refocus input
-      inputRef.current.selectionStart = 0;   // 🔁 Move cursor to start
-      inputRef.current.selectionEnd = 0;
+      inputRef.current.focus(); // 👈 Focus
+      // Set cursor at beginning
+      inputRef.current.setSelectionRange(0, 0);
     }
   }, [resetFlag]);
 
   return (
     <div className="flex flex-col items-center mt-6 w-full">
       <textarea
-        ref={inputRef}  // ✅ attach ref
+        ref={inputRef}
         className="bg-black text-white p-3 w-full rounded-lg font-mono text-lg resize-none"
         rows={2}
         autoFocus
