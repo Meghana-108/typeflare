@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
 
 const TypingTest = ({ promptWords }) => {
   const prompt = promptWords.join(" ");
@@ -7,38 +8,53 @@ const TypingTest = ({ promptWords }) => {
   const [incorrect, setIncorrect] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
-  const [sentToBackend, setSentToBackend] = useState(false); // ✅ prevent multiple submissions
+  const [sentToBackend, setSentToBackend] = useState(false);
 
-  const handleKeyDown = (e) => {
-    const key = e.key;
-
-    if (!startTime) setStartTime(Date.now());
-
-    // Only allow single characters and space
-    if (key.length !== 1 && key !== " ") return;
-
-    const expectedChar = prompt[currentIndex];
-
-    if (key === expectedChar) {
-      setInputHistory((prev) => [...prev, { char: key, correct: true }]);
-      setCurrentIndex((prev) => prev + 1);
-      setIncorrect(false);
-
-      if (currentIndex + 1 === prompt.length) {
-        const completedAt = Date.now();
-        setEndTime(completedAt);
-        sendResultToBackend(completedAt); // ✅ trigger sending
-      }
-    } else {
-      setIncorrect(true);
-      setInputHistory((prev) => [...prev, { char: key, correct: false }]);
-    }
-  };
+  const hiddenInputRef = useRef(null); // ✅ Ref for invisible input
 
   useEffect(() => {
+    const input = hiddenInputRef.current;
+    if (input) input.focus(); // Focus on load
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const key = e.key;
+
+      if (!startTime) setStartTime(Date.now());
+      if (key.length !== 1 && key !== " ") return;
+
+      const expectedChar = prompt[currentIndex];
+
+      if (key === expectedChar) {
+        setInputHistory((prev) => [...prev, { char: key, correct: true }]);
+        setCurrentIndex((prev) => prev + 1);
+        setIncorrect(false);
+
+        if (currentIndex + 1 === prompt.length) {
+          const completedAt = Date.now();
+          setEndTime(completedAt);
+          sendResultToBackend(completedAt);
+        }
+      } else {
+        setIncorrect(true);
+        setInputHistory((prev) => [...prev, { char: key, correct: false }]);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex]);
+  }, [currentIndex, prompt]);
+
+  const resetTest = () => {
+    setCurrentIndex(0);
+    setInputHistory([]);
+    setIncorrect(false);
+    setStartTime(null);
+    setEndTime(null);
+    setSentToBackend(false);
+    hiddenInputRef.current?.focus(); // ✅ Re-focus
+  };
 
   const calculateStats = (end = null) => {
     const totalTyped = inputHistory.length;
@@ -56,9 +72,8 @@ const TypingTest = ({ promptWords }) => {
 
   const { wpm, rawWpm, accuracy } = calculateStats();
 
-  // ✅ Send stats to backend
   const sendResultToBackend = async (completedAt) => {
-    if (sentToBackend) return; // only once
+    if (sentToBackend) return;
 
     const stats = calculateStats(completedAt);
 
@@ -80,30 +95,34 @@ const TypingTest = ({ promptWords }) => {
     }
   };
 
-const renderPrompt = () => {
-  return prompt.split("").map((char, idx) => {
-    let className = "text-gray-400";
+  const renderPrompt = () => {
+    return prompt.split("").map((char, idx) => {
+      let className = "text-gray-400";
 
-    if (idx < currentIndex) {
-      className = "text-green-500";
-    } else if (idx === currentIndex) {
-      className = incorrect ? "text-red-500 underline" : "underline";
-    }
+      if (idx < currentIndex) {
+        className = "text-green-500";
+      } else if (idx === currentIndex) {
+        className = incorrect ? "text-red-500 underline" : "underline";
+      }
 
-    // Convert regular space to non-breaking space for visibility
-    const displayChar = char === " " ? "\u00A0" : char;
+      const displayChar = char === " " ? "\u00A0" : char;
 
-    return (
-      <span key={idx} className={`${className} font-mono`}>
-        {displayChar}
-      </span>
-    );
-  });
-};
-
+      return (
+        <span key={idx} className={`${className} font-mono`}>
+          {displayChar}
+        </span>
+      );
+    });
+  };
 
   return (
     <div className="space-y-6">
+      {/* Hidden input to track key focus */}
+      <input
+        ref={hiddenInputRef}
+        style={{ opacity: 0, position: "absolute", pointerEvents: "none" }}
+      />
+
       <div className="bg-gray-800 p-6 rounded-md shadow-md min-h-[140px]">
         <div className="flex flex-wrap gap-[1px] text-xl">{renderPrompt()}</div>
         <p className="text-sm text-gray-500 mt-4">
@@ -111,7 +130,6 @@ const renderPrompt = () => {
         </p>
       </div>
 
-      {/* Live Stats */}
       <div className="flex gap-6 text-center">
         <div>
           <p className="text-2xl font-bold text-green-400">{wpm}</p>
@@ -126,6 +144,13 @@ const renderPrompt = () => {
           <p className="text-sm text-gray-400">Accuracy</p>
         </div>
       </div>
+
+      <button
+        onClick={resetTest}
+        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md text-white"
+      >
+        Reset
+      </button>
     </div>
   );
 };
