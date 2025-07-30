@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState } from "react";
-import TypingTest from "./TypingTest";
+import TypingTest from "./pages/TypingTest";
 import { commonWords } from "./wordList";
 
 const getRandomPrompt = () => {
