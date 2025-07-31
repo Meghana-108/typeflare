@@ -26,12 +26,12 @@ function App() {
     <div className="min-h-screen bg-black text-white p-10 space-y-6">
       <h1 className="text-3xl font-bold mb-4">TypeMaster</h1>
       <TypingTest promptWords={promptWords} />
-      <button
+      {/* <button
         onClick={handleReset}
         className="px-4 py-2 bg-purple-600 hover:bg-purple-700 transition rounded text-white font-medium"
       >
         ⟳ Reset Test
-      </button>
+      </button> */}
     </div>
   );
 }
