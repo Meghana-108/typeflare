@@ -147,7 +147,7 @@ const TypingTest = ({ promptWords }) => {
 
       <button
         onClick={resetTest}
-        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md text-white"
+        className="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-md text-white"
       >
         Reset
       </button>
